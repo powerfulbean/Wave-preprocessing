@@ -2,6 +2,7 @@
 %NoFolder=readfile_mat('../data');%加载数据文件名称
 Flag_OUTPUTbin = 1;
 Flag_OUTPUTpic = 0;
+Offset_num=10;
 Targetdir = '..\Output\';%输出图像保存总路径
 Targetdir_bin='..\BinOutput\';%输出数据保存总路径
 if ~exist([Targetdir_bin]) 
@@ -10,13 +11,14 @@ end
 Datadir = '..\data\';
 Seg_length_s = 1;%以1s为单位切割
 Fs = 256; %Sample rate is 256
-[~,~,Tag] = xlsread('数据标签1.2.xlsx'); 
+[~,~,Tag] = xlsread('数据标签1.2.xlsx','sheet3'); 
 % for i = 1: length(NoFolder)
 %     load (NoFolder{i});
 %     save([Targetdir,NoFolder{i}],'Output');
 % end
 load A1A2map19.mat
 load taglist.mat
+taglist = {'/-s'};
 load list.mat
 %% Calculate the number of the patients
 Tag_Row = length(Tag);
@@ -41,14 +43,14 @@ for i=1:Num_Patients
     %% 找到这个病人最后一段标注的行位置
     while isnan(Tag{per_EndRow,1})
     per_EndRow=per_EndRow+1;
-    if per_EndRow>length(Tag)
-        break;
-    end
+        if per_EndRow>length(Tag)
+            break;
+        end
     end
     per_EndRow=per_EndRow-1;
     %% Load data and information
     Startime = Tag{per_StartRow,Colmap('时间')};%load起始时间
-    data=load([Datadir 'P_' num2str(Tag{per_StartRow,1}) '.mat']);%载入病人数据
+    data=load([Datadir 'N_' num2str(Tag{per_StartRow,1}) '.mat']);%载入病人数据
     current_patientID = Tag{per_StartRow,1};%load病人病历号
     current_patientName = Tag{per_StartRow,3};
     Output{i,1}=current_patientID;
@@ -63,7 +65,7 @@ for i=1:Num_Patients
                 continue;
             end;
             Seg_num=Seg_num+1;
-            Seg_startime = Tag{j,tempCol};
+            Seg_startime = Tag{j,tempCol}++Offset_num;
             if strcmp(Tag{j,tempCol+1},'???')
                 continue;
             end;
@@ -132,7 +134,7 @@ for i=1:Num_Patients
                             str313=temp_str(4:5);
                         end
                         str41=list{tempChannel_list(q),1};
-                        fid=fopen([Targetdir_bin,str11,'_',[str311,'_',str312,'_',str313,],'Channel_',str41,'(1).txt'],'wb');
+                        fid=fopen([Targetdir_bin,'normal/',str11,'_',[str311,'_',str312,'_',str313,],'Channel_',str41,'(0).txt'],'wb');
                         temp=mapminmax(data.Output(tempChannel_list(q),Seg_num_Start:Seg_num_End-1),-1,1);
                         fwrite(fid,temp,'double');
                         fclose(fid);
